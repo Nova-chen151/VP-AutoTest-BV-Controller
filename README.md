@@ -84,6 +84,8 @@ VP-AutoTest-BV-Controller/
 │     ├─ lattice_planner.py
 │     ├─ quartic_polynomial.py
 │     └─ quintic_polynomial.py
+├─ doc/
+│  └─ 场景注入机使用和配置教程.pdf
 ├─ map/
 │  └─ TJ-map.json
 ├─ config.py
@@ -103,6 +105,7 @@ VP-AutoTest-BV-Controller/
 | `controllers/alg1/` | 第一套控制策略，包含减速区与转弯速度调整逻辑 |
 | `controllers/alg2/` | 第二套控制策略，执行基础 lattice 路径跟踪 |
 | `controllers/alg3/` | 第三套控制策略，当前实现与 `alg2` 基本一致，可作为后续扩展入口 |
+| `doc/` | 项目说明文档目录，当前包含《场景注入机使用和配置教程.pdf》供配置和使用参考 |
 | `map/TJ-map.json` | 路网数据文件，程序通过道路和车道信息生成全局路径 |
 | [test.py](./test.py) | 一个本地联调脚本，通过 HTTP 向 `127.0.0.1:7778` 发送仿真启动请求 |
 
@@ -339,6 +342,11 @@ http://127.0.0.1:7778/jd/startTessng
 衷心感谢国家自然科学基金委员会工程与材料科学部和中国汽车工程学会的支持以及[TOPS课题组](https://tops.tongji.edu.cn/index.htm)的集体努力与卓越贡献。
 
 ## <span id="jump8">8 变更日志
+
+### [2026-04-24]
+
+- 新增 `doc/` 文档目录说明
+- 在项目结构中补充《场景注入机使用和配置教程.pdf》入口
 
 ### [2026-04-20]
 
