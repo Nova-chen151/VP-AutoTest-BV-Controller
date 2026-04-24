@@ -20,7 +20,7 @@
 当前项目的核心特点如下：
 
 - 使用 `Redis Pub/Sub` 与外部仿真平台交互
-- 从 `map/YYT_TJST_unlimited.json` 中提取道路或车道中心线生成全局路径
+- 从 `map/TJ-map.json` 中提取道路或车道中心线生成全局路径
 - 根据场景编号切换不同控制器与路径配置
 - 控制器内部采用样条参考线 + lattice planner 生成下一时刻目标点
 - 支持基础路径跟踪、变道型路径拼接、局部点偏移等场景配置能力
@@ -85,7 +85,7 @@ VP-AutoTest-BV-Controller/
 │     ├─ quartic_polynomial.py
 │     └─ quintic_polynomial.py
 ├─ map/
-│  └─ YYT_TJST_unlimited.json
+│  └─ TJ-map.json
 ├─ config.py
 ├─ main.py
 ├─ requirements.txt
@@ -103,7 +103,7 @@ VP-AutoTest-BV-Controller/
 | `controllers/alg1/` | 第一套控制策略，包含减速区与转弯速度调整逻辑 |
 | `controllers/alg2/` | 第二套控制策略，执行基础 lattice 路径跟踪 |
 | `controllers/alg3/` | 第三套控制策略，当前实现与 `alg2` 基本一致，可作为后续扩展入口 |
-| `map/YYT_TJST_unlimited.json` | 路网数据文件，程序通过道路和车道信息生成全局路径 |
+| `map/TJ-map.json` | 路网数据文件，程序通过道路和车道信息生成全局路径 |
 | [test.py](./test.py) | 一个本地联调脚本，通过 HTTP 向 `127.0.0.1:7778` 发送仿真启动请求 |
 
 ## <span id="jump3">3 运行机制说明
@@ -113,7 +113,7 @@ VP-AutoTest-BV-Controller/
 [main.py](./main.py) 中的 `SimVehController` 是整个系统的主控对象。程序启动后会：
 
 1. 读取 [config.py](./config.py) 中的全局配置
-2. 加载 `map/YYT_TJST_unlimited.json` 路网文件
+2. 加载 `map/TJ-map.json` 路网文件
 3. 根据默认场景生成一条全局参考路径
 4. 订阅总入口通道 `algorithm`
 5. 根据收到的消息类型，执行心跳上报、开始控制或切换场景
