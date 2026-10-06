@@ -1,7 +1,11 @@
 <div align="center">
   <img src="asset/ONSITE-blue-logo-cn_name.svg" alt="OnSite" width="760">
 
-# Onsite 实车赛虚实融合注入机背景车二次开发
+# Background Vehicle Customization for the Onsite Real-Vehicle Competition's Virtual–Physical Fusion Injection System
+
+<p>
+  <strong>English</strong> · <a href="README_zh.md">中文</a>
+</p>
 </div>
 
 <div align="center">
@@ -14,33 +18,36 @@
 <a href="./LICENSE"><img src="https://img.shields.io/badge/LICENSE-Apache License 2.0-lightgray"></a>
 </div>
 
-## 项目概述
-基于 Redis 消息订阅/发布的仿真车辆控制程序。仓库通过 `main.py` 监听仿真平台下发的控制消息、车辆定位消息和场景切换消息，再按场景编号选择对应控制器，为指定车辆持续输出控制指令。
+## Project Overview
 
-当前项目的核心特点如下：
+A simulated vehicle control program based on Redis publish/subscribe messaging. Through `main.py`, the repository listens for control messages, vehicle location messages, and scenario change messages from the simulation platform. It then selects the appropriate controller based on the scenario ID and continuously outputs control commands for the specified vehicles.
 
-- 使用 `Redis` 与外部仿真平台交互
-- 从 `map/TJ-map.json` 中提取道路或车道中心线生成全局路径
-- 根据场景编号切换不同控制器与路径配置
-- 控制器内部采用样条参考线 + lattice planner 生成下一时刻目标点
-- 支持基础路径跟踪、变道型路径拼接、局部点偏移等场景配置能力
+The project's current core features are:
 
-## 目录
+- Interaction with an external simulation platform through `Redis`
+- Global path generation by extracting road or lane centerlines from `map/TJ-map.json`
+- Selection of different controllers and path configurations based on the scenario ID
+- Generation of the next target point using a spline reference line and a lattice planner within each controller
+- Support for scenario configurations such as basic path tracking, path stitching for lane changes, and local point offsets
 
-- [1 环境配置](#jump1)
-- [2 项目结构](#jump2)
-- [3 运行机制说明](#jump3)
-- [4 控制器说明](#jump4)
-- [5 运行方式](#jump5)
-- [6 消息格式与联调说明](#jump6)
-- [7 输出与调试建议](#jump7)
-- [8 变更日志](#jump8)
+## Table of Contents
 
-## <span id="jump1">1 环境配置
+- [1 Environment Setup](#jump1)
+- [2 Project Structure](#jump2)
+- [3 How It Works](#jump3)
+- [4 Controllers](#jump4)
+- [5 Running the Program](#jump5)
+- [6 Message Formats and Integration Testing](#jump6)
+- [7 Acknowledgments](#jump7)
+- [8 Changelog](#jump8)
 
-### 1.1 安装依赖
+<a id="jump1"></a>
 
-建议使用 Python 3.10 及以上版本，并通过 conda 创建环境后安装依赖：
+## 1 Environment Setup
+
+### 1.1 Installing Dependencies
+
+Python 3.10 or later is recommended. Create an environment with conda, then install the dependencies:
 
 ```bash
 conda create -n onsite python=3.10
@@ -48,19 +55,21 @@ conda activate onsite
 pip install -r requirements.txt
 ```
 
-### 1.2 Redis 连接配置
+### 1.2 Redis Connection Configuration
 
-Redis 连接信息位于 [config.py](./config.py) 的 `SIM_CONTROLLER_CONFIG["redis"]` 中，包括：
+The Redis connection settings are located in `SIM_CONTROLLER_CONFIG["redis"]` in [config.py](./config.py) and include:
 
 - `host`
 - `port`
 - `password`
 
-如需切换到其他环境，请先修改该配置，再启动程序。
+To switch to a different environment, update these settings before starting the program.
 
-## <span id="jump2">2 项目结构
+<a id="jump2"></a>
 
-当前仓库的实际目录结构如下：
+## 2 Project Structure
+
+The repository's current directory structure is as follows:
 
 ```text
 VP-AutoTest-BV-Controller/
@@ -92,155 +101,162 @@ VP-AutoTest-BV-Controller/
 ├─ main.py
 ├─ requirements.txt
 ├─ test.py
-└─ README.md
+├─ README.md
+└─ README_zh.md
 ```
 
-### 2.1 关键文件说明
+### 2.1 Key Files
 
-| 文件 | 说明 |
+| File | Description |
 | --- | --- |
-| [main.py](./main.py) | 主程序入口，负责订阅 Redis 消息、切换场景、创建控制器并发布控制指令 |
-| [config.py](./config.py) | 统一维护场景定义、控制器映射、道路元素列表、Redis 配置等 |
-| [controllers/BaseController.py](./controllers/BaseController.py) | 控制器抽象基类，定义 `set_route_points` 和 `get_next_action` 接口 |
-| `controllers/alg1/` | 第一套控制策略，包含减速区与转弯速度调整逻辑 |
-| `controllers/alg2/` | 第二套控制策略，执行基础 lattice 路径跟踪 |
-| `controllers/alg3/` | 第三套控制策略，当前实现与 `alg2` 基本一致，可作为后续扩展入口 |
-| `doc/` | 项目说明文档目录，当前包含《场景注入机使用和配置教程.pdf》供配置和使用参考 |
-| `map/TJ-map.json` | 路网数据文件，程序通过道路和车道信息生成全局路径 |
-| [test.py](./test.py) | 一个本地联调脚本，通过 HTTP 向 `127.0.0.1:7778` 发送仿真启动请求 |
+| [main.py](./main.py) | Main entry point, responsible for subscribing to Redis messages, switching scenarios, creating controllers, and publishing control commands |
+| [config.py](./config.py) | Central configuration for scenario definitions, controller mappings, lists of road elements, Redis settings, and more |
+| [controllers/BaseController.py](./controllers/BaseController.py) | Abstract controller base class defining the `set_route_points` and `get_next_action` interfaces |
+| `controllers/alg1/` | First control strategy, including slowdown zones and speed adjustment logic for turns |
+| `controllers/alg2/` | Second control strategy, performing basic lattice path tracking |
+| `controllers/alg3/` | Third control strategy, currently largely identical to `alg2`, providing a starting point for future extensions |
+| `doc/` | Project documentation directory, currently containing `场景注入机使用和配置教程.pdf` (Scenario Injection System Usage and Configuration Tutorial) as a reference for configuration and use |
+| `map/TJ-map.json` | Road network data file; the program generates global paths from its road and lane information |
+| [test.py](./test.py) | A local integration testing script that sends an HTTP simulation start request to `127.0.0.1:7778` |
 
-## <span id="jump3">3 运行机制说明
+<a id="jump3"></a>
 
-### 3.1 主流程
+## 3 How It Works
 
-[main.py](./main.py) 中的 `SimVehController` 是整个系统的主控对象。程序启动后会：
+### 3.1 Main Workflow
 
-1. 读取 [config.py](./config.py) 中的全局配置
-2. 加载 `map/TJ-map.json` 路网文件
-3. 根据默认场景生成一条全局参考路径
-4. 订阅总入口通道 `algorithm`
-5. 根据收到的消息类型，执行心跳上报、开始控制或切换场景
+`SimVehController` in [main.py](./main.py) is the main control object for the entire system. When the program starts, it:
 
-### 3.2 场景配置生成路径
+1. Reads the global configuration from [config.py](./config.py)
+2. Loads the `map/TJ-map.json` road network file
+3. Generates a global reference path based on the default scenario
+4. Subscribes to the main entry channel, `algorithm`
+5. Reports heartbeats, starts control, or switches scenarios according to the type of message received
 
-每个场景在 `SCENARIO_DEFINITIONS` 中定义，主要包括：
+### 3.2 Generating Paths from Scenario Configurations
 
-- `id`：场景编号
-- `controller`：该场景使用的控制器类
-- `control_enabled`：该场景是否启用算法控制
-- `is_default`：是否为默认场景
-- `config`：路径构造参数
+Each scenario is defined in `SCENARIO_DEFINITIONS`, primarily with the following fields:
 
-其中 `config` 会控制以下行为：
+- `id`: Scenario ID
+- `controller`: Controller class used by the scenario
+- `control_enabled`: Whether algorithm control is enabled for the scenario
+- `is_default`: Whether this is the default scenario
+- `config`: Path construction parameters
 
-- `element_ids`：按顺序拼接的道路 ID 列表
-- `lane_numbers`：每条道路对应使用的车道编号
-- `use_lane_switching`：是否在两条相邻车道中心线之间交替取点，生成变道型路径
-- `apply_offset`：是否对指定道路前若干个点施加横向偏移
-- `offset_roads` / `offset_count` / `y_offset`：偏移细节
+The `config` field controls the following behavior:
 
-程序通过 `_get_route_points_from_elements()` 将这些配置转换为 `Point` 列表，再交给控制器生成参考样条。
+- `element_ids`: List of road IDs to connect in sequence
+- `lane_numbers`: Lane number to use for each road
+- `use_lane_switching`: Whether to alternate points between two adjacent lane centerlines to generate a lane change path
+- `apply_offset`: Whether to apply a lateral offset to the first few points of specified roads
+- `offset_roads` / `offset_count` / `y_offset`: Offset details
 
-### 3.3 控制消息处理逻辑
+The program uses `_get_route_points_from_elements()` to convert these settings into a list of `Point` objects, which is then passed to the controller to generate a reference spline.
 
-主程序会处理三类消息：
+### 3.3 Control Message Processing
 
-- `type == 1`：启动心跳线程，周期性向状态通道发送设备状态
-- `type == 2`：开始控制，记录哪些车辆由当前算法接管，并启动定位订阅线程
-- `type == 3`：切换场景，重新应用场景配置、重建路径并清空旧控制器实例
+The main program handles three types of messages:
 
-收到车辆定位消息后，程序会：
+- `type == 1`: Starts a heartbeat thread that periodically sends device status to the status channel
+- `type == 2`: Starts control, records which vehicles are taken over by the current algorithm, and starts a location subscription thread
+- `type == 3`: Switches scenarios, reapplies the scenario configuration, rebuilds the path, and clears existing controller instances
 
-1. 收集所有车辆的位置和速度，组织为障碍物数组
-2. 过滤出需要由算法控制的车辆
-3. 按当前场景编号选择控制器类
-4. 为新车辆创建控制器，并注入当前全局路径
-5. 调用 `get_next_action(...)` 生成控制输出
-6. 将多个车辆的控制结果打包后发布到控制通道
+Upon receiving a vehicle location message, the program:
 
-## <span id="jump4">4 控制器说明
+1. Collects the positions and speeds of all vehicles and organizes them into an obstacle array
+2. Filters for vehicles that need to be controlled by the algorithm
+3. Selects the controller class based on the current scenario ID
+4. Creates a controller for each new vehicle and supplies the current global path
+5. Calls `get_next_action(...)` to generate control output
+6. Packages the control results for multiple vehicles and publishes them to the control channel
 
-### 4.1 控制器统一接口
+<a id="jump4"></a>
 
-所有控制器都继承自 [controllers/BaseController.py](./controllers/BaseController.py)，需要实现两个核心接口：
+## 4 Controllers
 
-- `set_route_points(route_points)`：接收全局路径点并建立内部参考线
-- `get_next_action(current_x, current_y, speed, accel, angle, obstacles=None)`：基于当前状态返回下一步 `Action`
+### 4.1 Common Controller Interface
 
-`Action` 模型中当前主要使用的是：
+All controllers inherit from [controllers/BaseController.py](./controllers/BaseController.py) and must implement two core interfaces:
 
-- `type=1`：位置控制
-- `lon` / `lat`：下一目标点坐标
-- `remove=True`：表示车辆已到达终点，可从控制列表中移除
+- `set_route_points(route_points)`: Receives global path points and builds an internal reference line
+- `get_next_action(current_x, current_y, speed, accel, angle, obstacles=None)`: Returns the next `Action` based on the current state
+
+The main fields currently used in the `Action` model are:
+
+- `type=1`: Position control
+- `lon` / `lat`: Coordinates of the next target point
+- `remove=True`: Indicates that the vehicle has reached the endpoint and can be removed from the control list
 
 ### 4.2 Controller1
 
-[controllers/alg1/Controller1.py](./controllers/alg1/Controller1.py) 在基础 lattice 路径跟踪之外，额外加入了速度调节逻辑：
+[controllers/alg1/Controller1.py](./controllers/alg1/Controller1.py) adds speed adjustment logic to basic lattice path tracking:
 
-- 使用 `slow_roads` 标记需要重点处理的道路段
-- 通过 `_update_road_status()` 粗略判断车辆当前所在路径段
-- 在指定道路连接处设置减速区
-- 在转弯阶段使用更低目标速度
+- Uses `slow_roads` to mark road segments that require special handling
+- Uses `_update_road_status()` to roughly determine the vehicle's current path segment
+- Sets slowdown zones at specified road connections
+- Uses a lower target speed during turns
 
-默认速度参数如下：
+The default speed parameters are:
 
 - `normal_speed = 12.0 / 3.6`
 - `transition_speed = 8.0 / 3.6`
 - `slow_speed = 4.5 / 3.6`
 
-当前 `config.py` 中场景 `id=3` 使用该控制器。
+Scenario `id=3` in the current `config.py` uses this controller.
 
 ### 4.3 Controller2
 
-[controllers/alg2/Controller2.py](./controllers/alg2/Controller2.py) 是一套更直接的参考线跟踪实现，流程为：
+[controllers/alg2/Controller2.py](./controllers/alg2/Controller2.py) is a more straightforward reference line tracking implementation with the following workflow:
 
-1. 清理重复路径点
-2. 基于路径点生成样条参考线
-3. 通过 `_find_s()` 找到车辆在参考线上的最近弧长位置
-4. 通过 `_calc_l()` 估计横向偏移
-5. 调用 `lattice_planner_for_Cruising(...)` 生成局部轨迹
-6. 逐点输出局部轨迹中的下一个目标点
+1. Removes duplicate path points
+2. Generates a spline reference line from the path points
+3. Uses `_find_s()` to find the nearest arc-length position on the reference line for the vehicle
+4. Uses `_calc_l()` to estimate the lateral offset
+5. Calls `lattice_planner_for_Cruising(...)` to generate a local trajectory
+6. Outputs the next target point from the local trajectory, one point at a time
 
-实现中已经预留了 `obstacles` 参数，但当前版本将 `C.obs` 固定置为空数组，没有实际启用障碍物避让。
+The implementation already includes an `obstacles` parameter, but the current version fixes `C.obs` to an empty array, so obstacle avoidance is not actually enabled.
 
-当前 `config.py` 中场景 `id=9` 使用该控制器。
+Scenario `id=9` in the current `config.py` uses this controller.
 
 ### 4.4 Controller3
 
-[controllers/alg3/Controller3.py](./controllers/alg3/Controller3.py) 的当前实现与 `Controller2` 基本一致，主要特点如下：
+The current implementation of [controllers/alg3/Controller3.py](./controllers/alg3/Controller3.py) is largely identical to `Controller2`, with the following main characteristics:
 
-- 同样基于参考样条和 lattice planner 输出下一目标位置
-- 同样会在到达终点 1 米范围内返回 `remove=True`
-- 同样预留了 `obstacles` 输入，但当前实现中未真正加载障碍物
-- 适合作为第三套算法的实验入口，在不影响 `alg1`、`alg2` 的前提下继续演化
+- Also outputs the next target position using a reference spline and lattice planner
+- Also returns `remove=True` when the vehicle is within 1 meter of the endpoint
+- Also provides an `obstacles` input, but does not actually load obstacles in the current implementation
+- Provides a starting point for experiments with a third algorithm, allowing further development without affecting `alg1` or `alg2`
 
-需要注意的是：`Controller3` 已经在仓库中实现，但尚未在 [config.py](./config.py) 的 `SCENARIO_DEFINITIONS` 中注册，因此默认运行流程不会自动使用它。如果需要启用，需要新增一个场景配置并将 `controller` 指向 `Controller3`。
+Note that `Controller3` is implemented in the repository but has not yet been registered in `SCENARIO_DEFINITIONS` in [config.py](./config.py), so the default workflow will not use it automatically. To enable it, add a new scenario configuration and set `controller` to `Controller3`.
 
-## <span id="jump5">5 运行方式
+<a id="jump5"></a>
 
-### 5.1 启动主控制程序
+## 5 Running the Program
+
+### 5.1 Starting the Main Control Program
 
 ```bash
 python main.py
 ```
 
-程序启动后会：
+When the program starts, it:
 
-- 连接 Redis
-- 加载地图
-- 应用默认场景配置
-- 持续监听 `algorithm` 通道消息
+- Connects to Redis
+- Loads the map
+- Applies the default scenario configuration
+- Continuously listens for messages on the `algorithm` channel
 
-### 5.2 修改默认场景或控制器映射
+### 5.2 Changing the Default Scenario or Controller Mapping
 
-如需变更默认行为，请编辑 [config.py](./config.py) 中的 `SCENARIO_DEFINITIONS`。当前内置场景为：
+To change the default behavior, edit `SCENARIO_DEFINITIONS` in [config.py](./config.py). The currently included scenarios are:
 
-| 场景 ID | 控制器 | 默认启用 | 路径特征 |
+| Scenario ID | Controller | Enabled by Default | Path Characteristics |
 | --- | --- | --- | --- |
-| `3` | `Controller1` | 是 | 固定车道路径，且对部分道路前几个点施加 `y` 方向偏移 |
-| `9` | `Controller2` | 否 | 启用车道交替取点，形成变道型路径 |
+| `3` | `Controller1` | Yes | Fixed-lane path, with a `y`-direction offset applied to the first few points of some roads |
+| `9` | `Controller2` | No | Alternates points between lanes to form a lane change path |
 
-如果要启用 `Controller3`，可按现有格式追加一个新场景，例如：
+To enable `Controller3`, append a new scenario using the existing format, for example:
 
 ```python
 from controllers.alg3.Controller3 import Controller3
@@ -262,45 +278,47 @@ from controllers.alg3.Controller3 import Controller3
 }
 ```
 
-### 5.3 使用联调脚本
+### 5.3 Using the Integration Testing Script
 
-[test.py](./test.py) 可用于向本机服务发送一个示例仿真启动请求：
+[test.py](./test.py) can send a sample simulation start request to a local service:
 
 ```bash
 python test.py
 ```
 
-该脚本默认请求地址为：
+The script's default request URL is:
 
 ```text
 http://127.0.0.1:7778/jd/startTessng
 ```
 
-它更适合做联调示例或接口调通，不参与 `main.py` 的主控制逻辑。
+It is best suited to integration testing examples or verifying API connectivity, and is not part of the main control logic in `main.py`.
 
-## <span id="jump6">6 消息格式与联调说明
+<a id="jump6"></a>
 
-### 6.1 订阅入口
+## 6 Message Formats and Integration Testing
 
-程序默认订阅通道由 [config.py](./config.py) 中的以下配置决定：
+### 6.1 Subscription Entry Point
+
+The channel to which the program subscribes by default is determined by the following setting in [config.py](./config.py):
 
 ```python
 "channels": {"subscribe": "algorithm"}
 ```
 
-### 6.2 开始控制消息
+### 6.2 Start Control Message
 
-当收到 `type == 2` 的消息时，程序会重点读取以下字段：
+When a message with `type == 2` is received, the program primarily reads the following fields:
 
 - `locationChannel`
 - `controlChannel`
 - `vehPointsMapping`
 
-其中 `vehPointsMapping` 的 key 会被解析为需要由算法接管的车辆 ID 集合，只有这些车辆才会创建控制器实例。
+The keys in `vehPointsMapping` are parsed into the set of vehicle IDs to be taken over by the algorithm. Controller instances are created only for these vehicles.
 
-### 6.3 定位消息
+### 6.3 Location Messages
 
-定位消息会被解析为 `msg_data["value"]["value"]` 列表，每个车辆对象至少需要包含：
+Location messages are parsed as the `msg_data["value"]["value"]` list. Each vehicle object must contain at least the following fields:
 
 - `originId`
 - `number`
@@ -312,15 +330,15 @@ http://127.0.0.1:7778/jd/startTessng
 - `driveType`
 - `controlType`
 
-过滤规则如下：
+The filtering rules are:
 
-- `driveType == 1` 的车辆不参与控制
-- `controlType == 0` 的车辆不参与控制
-- 不在 `vehPointsMapping` 指定范围内的车辆不参与控制
+- Vehicles with `driveType == 1` are excluded from control
+- Vehicles with `controlType == 0` are excluded from control
+- Vehicles outside the set specified by `vehPointsMapping` are excluded from control
 
-### 6.4 控制输出
+### 6.4 Control Output
 
-控制结果会组装为如下结构后发布：
+Control results are assembled into the following structure and then published:
 
 ```json
 {
@@ -337,18 +355,22 @@ http://127.0.0.1:7778/jd/startTessng
 }
 ```
 
-## <span id="jump7">7 致谢
+<a id="jump7"></a>
 
-衷心感谢国家自然科学基金委员会工程与材料科学部和中国汽车工程学会的支持以及[TOPS课题组](https://tops.tongji.edu.cn/index.htm)的集体努力与卓越贡献。
+## 7 Acknowledgments
 
-## <span id="jump8">8 变更日志
+We sincerely thank the Department of Engineering and Materials Sciences of the National Natural Science Foundation of China and the China Society of Automotive Engineers for their support, and the [TOPS research group](https://tops.tongji.edu.cn/index.htm) for its collective efforts and outstanding contributions.
+
+<a id="jump8"></a>
+
+## 8 Changelog
 
 ### [2026-04-24]
 
-- 新增 `doc/` 文档目录说明
-- 在项目结构中补充《场景注入机使用和配置教程.pdf》入口
+- Added a description of the `doc/` documentation directory
+- Added the `场景注入机使用和配置教程.pdf` entry to the project structure
 
 ### [2026-04-20]
 
-- 代码首次上传
-- 补充项目说明、环境配置和数据组织方式
+- Initial code upload
+- Added the project description, environment setup, and data organization details
